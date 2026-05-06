@@ -1,0 +1,21 @@
+version: "2"
+sql:
+  - schema: "database/schema"
+    queries: "database/queries"
+    engine: "postgresql"
+    gen:
+      go:
+        out: "internal/database"
+        overrides:
+          # Map Postgres numeric/decimal to shopspring/decimal
+          - db_type: "pg_catalog.numeric"
+            go_type: "github.com/shopspring/decimal.Decimal"
+          - db_type: "pg_catalog.decimal"
+            go_type: "github.com/shopspring/decimal.Decimal"
+          # Explicitly ensure users.monthly_income is decimal
+          - column: "users.monthly_income"
+            go_type: "github.com/shopspring/decimal.Decimal"
+          - column: debts.accrued_interest
+            go_type: github.com/shopspring/decimal.Decimal
+          - column: debts.last_accrual_date
+            go_type: time.Time

@@ -1,0 +1,904 @@
+{
+	"info": {
+		"name": "DebtEase API",
+		"description": "Complete API collection for DebtEase backend (Indian context). All monetary values are in INR (₹). Includes all endpoints with examples for credit cards, loans, payments, and dashboard. Examples use Indian banks (HDFC, ICICI, SBI) and typical Indian interest rates and loan amounts.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_postman_id": "debt-ease-collection",
+		"version": "2.0.0"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/healthz",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "healthz"]
+						},
+						"description": "Check if the API server is running. Returns 'OK' if healthy."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Response is OK', function () {",
+									"    pm.expect(pm.response.text()).to.equal('OK');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			],
+			"description": "Health check endpoints"
+		},
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "register"]
+						},
+						"description": "Create a new user account. Returns user ID and timestamps."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"pm.test('Response has user ID', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "login"]
+						},
+						"description": "Authenticate user and receive access token and refresh token."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"const res = pm.response.json();",
+									"if (res && res.token) {",
+									"    pm.environment.set('accessToken', res.token);",
+									"    pm.test('Access token saved', function () {",
+									"        pm.expect(res.token).to.be.a('string');",
+									"    });",
+									"}",
+									"if (res && res.id) {",
+									"    pm.environment.set('userId', res.id);",
+									"}",
+									"if (res && res.refresh_token) {",
+									"    pm.environment.set('refreshToken', res.refresh_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			],
+			"description": "Authentication endpoints for user registration and login"
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Updated\",\n  \"email\": \"john.updated@example.com\",\n  \"monthly_income\": \"50000.00\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users"]
+						},
+						"description": "Update user profile. All fields are optional - only include fields you want to update."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Response has updated user data', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			],
+			"description": "User management endpoints"
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{
+					"name": "Get Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "dashboard"]
+						},
+						"description": "Get comprehensive dashboard summary including debt overview, repayment progress, upcoming payments, and payment history."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Response has dashboard data', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('total_outstanding');",
+									"    pm.expect(jsonData).to.have.property('repayment_progress');",
+									"    pm.expect(jsonData).to.have.property('debt_health');",
+									"    pm.expect(jsonData).to.have.property('upcoming_emis');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			],
+			"description": "Dashboard endpoints for overview and analytics"
+		},
+		{
+			"name": "Debts",
+			"item": [
+				{
+					"name": "Create Debt - Credit Card",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"HDFC Credit Card\",\n  \"type\": \"credit_card\",\n  \"lender\": \"HDFC Bank\",\n  \"principal\": \"50000.00\",\n  \"outstanding_balance\": \"35000.00\",\n  \"interest_rate\": \"0.3600\",\n  \"min_payment\": \"1750.00\",\n  \"due_date\": \"2025-12-01T00:00:00Z\",\n  \"payment_frequency\": \"monthly\",\n  \"debt_taken\": \"2024-05-01T00:00:00Z\",\n  \"risk_level\": \"medium\",\n  \"priority\": 5,\n  \"notes\": \"Credit card debt\",\n  \"billing_day\": 15,\n  \"grace_period_days\": 20,\n  \"min_payment_percent\": \"5.00\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/debts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts"]
+						},
+						"description": "Create a credit card debt. Requires billing_day, grace_period_days, and optionally min_payment_percent."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"try {",
+									"    const d = pm.response.json();",
+									"    if (d && d.id) {",
+									"        pm.environment.set('debtId', d.id);",
+									"        pm.test('Debt ID saved', function () {",
+									"            pm.expect(d.id).to.be.a('string');",
+									"        });",
+									"    }",
+									"} catch (e) {}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Create Debt - Personal Loan",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Personal Loan\",\n  \"type\": \"personal_loan\",\n  \"lender\": \"ICICI Bank\",\n  \"principal\": \"500000.00\",\n  \"outstanding_balance\": \"425000.00\",\n  \"interest_rate\": \"0.1200\",\n  \"min_payment\": \"17500.00\",\n  \"due_date\": \"2025-12-15T00:00:00Z\",\n  \"payment_frequency\": \"monthly\",\n  \"debt_taken\": \"2023-01-15T00:00:00Z\",\n  \"risk_level\": \"low\",\n  \"priority\": 3,\n  \"payment_due_day\": 15,\n  \"emi_amount\": \"17500.00\",\n  \"tenure_months\": 36\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/debts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts"]
+						},
+						"description": "Create a personal loan debt. EMI amount can be auto-calculated if tenure_months is provided."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"try {",
+									"    const d = pm.response.json();",
+									"    if (d && d.id) {",
+									"        pm.environment.set('debtId', d.id);",
+									"    }",
+									"} catch (e) {}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Create Debt - Student Loan",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Education Loan\",\n  \"type\": \"student_loan\",\n  \"lender\": \"SBI\",\n  \"principal\": \"1000000.00\",\n  \"outstanding_balance\": \"850000.00\",\n  \"interest_rate\": \"0.0850\",\n  \"min_payment\": \"12000.00\",\n  \"due_date\": \"2025-12-20T00:00:00Z\",\n  \"payment_frequency\": \"monthly\",\n  \"debt_taken\": \"2020-09-01T00:00:00Z\",\n  \"risk_level\": \"low\",\n  \"priority\": 2,\n  \"payment_due_day\": 20,\n  \"tenure_months\": 120,\n  \"moratorium_until\": null\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/debts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts"]
+						},
+						"description": "Create a student loan debt. Can include moratorium_until for deferment periods."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"try {",
+									"    const d = pm.response.json();",
+									"    if (d && d.id) {",
+									"        pm.environment.set('debtId', d.id);",
+									"    }",
+									"} catch (e) {}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Create Debt - Mortgage",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Home Loan\",\n  \"type\": \"mortgage\",\n  \"lender\": \"HDFC Bank\",\n  \"principal\": \"5000000.00\",\n  \"outstanding_balance\": \"4500000.00\",\n  \"interest_rate\": \"0.0850\",\n  \"min_payment\": \"45000.00\",\n  \"due_date\": \"2025-12-01T00:00:00Z\",\n  \"payment_frequency\": \"monthly\",\n  \"debt_taken\": \"2020-01-15T00:00:00Z\",\n  \"risk_level\": \"low\",\n  \"priority\": 1,\n  \"payment_due_day\": 1,\n  \"emi_amount\": \"45000.00\",\n  \"tenure_months\": 240\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/debts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts"]
+						},
+						"description": "Create a mortgage debt. Typically has long tenure (15-30 years)."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"try {",
+									"    const d = pm.response.json();",
+									"    if (d && d.id) {",
+									"        pm.environment.set('debtId', d.id);",
+									"    }",
+									"} catch (e) {}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "List Debts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/debts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts"]
+						},
+						"description": "Get all debts for the authenticated user. Returns an array of debt objects."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Response is an array', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Debt",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/debts/{{debtId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts", "{{debtId}}"]
+						},
+						"description": "Get a specific debt by ID. Returns detailed debt information."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Response has debt data', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('outstanding_balance');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Update Balance",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"outstanding_balance\": \"33250.00\",\n  \"is_overdue\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/debts/{{debtId}}/balance",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts", "{{debtId}}", "balance"]
+						},
+						"description": "Update the outstanding balance and overdue status of a debt."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Update Health",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"debt_health_score\": \"72.50\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/debts/{{debtId}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts", "{{debtId}}", "health"]
+						},
+						"description": "Update the debt health score (0-100)."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Mark Overdue",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/debts/{{debtId}}/overdue",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts", "{{debtId}}", "overdue"]
+						},
+						"description": "Mark a debt as overdue."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			],
+			"description": "Debt management endpoints for creating, listing, updating, and managing debts"
+		},
+		{
+			"name": "Payments",
+			"item": [
+				{
+					"name": "Record Payment - Minimum",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"payment_date\": \"2025-11-15T00:00:00Z\",\n  \"type\": \"minimum\",\n  \"notes\": \"Monthly minimum payment\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/debts/{{debtId}}/payments",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts", "{{debtId}}", "payments"]
+						},
+						"description": "Record a minimum payment. Amount is automatically calculated from the debt's min_payment field."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"pm.test('Response has payment and debt data', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('payment');",
+									"    pm.expect(jsonData).to.have.property('debt');",
+									"    pm.expect(jsonData.payment).to.have.property('amount');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Record Payment - Full",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"payment_date\": \"2025-11-15T00:00:00Z\",\n  \"type\": \"full\",\n  \"payment_method\": \"upi\",\n  \"notes\": \"Paid off in full\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/debts/{{debtId}}/payments",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts", "{{debtId}}", "payments"]
+						},
+						"description": "Record a full payment (pays off entire outstanding balance including accrued interest)."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"pm.test('Response has payment data', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('payment');",
+									"    pm.expect(jsonData.payment.type).to.equal('full');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Record Payment - Extra",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"payment_date\": \"2025-11-15T00:00:00Z\",\n  \"type\": \"extra\",\n  \"amount\": \"5000.00\",\n  \"payment_method\": \"upi\",\n  \"notes\": \"Extra payment to reduce principal\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/debts/{{debtId}}/payments",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts", "{{debtId}}", "payments"]
+						},
+						"description": "Record an extra payment. Requires amount field. Extra payments are applied to principal after interest."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"pm.test('Response has payment data with amount', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('payment');",
+									"    pm.expect(jsonData.payment.type).to.equal('extra');",
+									"    pm.expect(jsonData.payment).to.have.property('amount');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "List Payments",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/debts/{{debtId}}/payments",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "debts", "{{debtId}}", "payments"]
+						},
+						"description": "Get all payments for a specific debt. Returns an array of payment objects."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Response is an array', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			],
+			"description": "Payment recording and listing endpoints"
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Get Metrics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/metrics",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "metrics"]
+						},
+						"description": "Get admin metrics (file server hit count). Returns HTML page."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Response is HTML', function () {",
+									"    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			],
+			"description": "Admin endpoints for monitoring and metrics"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-authenticate if token is missing",
+					"const token = pm.environment.get('accessToken');",
+					"const email = pm.environment.get('email');",
+					"const password = pm.environment.get('password');",
+					"",
+					"// Only auto-login if token is missing and credentials are available",
+					"// Skip for auth endpoints to avoid infinite loops",
+					"const url = pm.request.url.toString();",
+					"const isAuthEndpoint = url.includes('/api/login') || url.includes('/api/register');",
+					"",
+					"if (!token && !isAuthEndpoint && email && password) {",
+					"    pm.sendRequest({",
+					"        url: pm.environment.get('baseUrl') + '/api/login',",
+					"        method: 'POST',",
+					"        header: { 'Content-Type': 'application/json' },",
+					"        body: {",
+					"            mode: 'raw',",
+					"            raw: JSON.stringify({",
+					"                email: email,",
+					"                password: password",
+					"            })",
+					"        }",
+					"    }, function (err, res) {",
+					"        if (!err && res && res.code === 200) {",
+					"            const body = res.json();",
+					"            if (body && body.token) {",
+					"                pm.environment.set('accessToken', body.token);",
+					"            }",
+					"            if (body && body.id) {",
+					"                pm.environment.set('userId', body.id);",
+					"            }",
+					"            if (body && body.refresh_token) {",
+					"                pm.environment.set('refreshToken', body.refresh_token);",
+					"            }",
+					"        }",
+					"    });",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script - runs after each request",
+					"pm.test('Response time is less than 5000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}

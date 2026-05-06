@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: debtease-backend
+    env: go
+    rootDir: DebtEase-backend-go
+    plan: starter
+    buildCommand: go mod download && go build -o server ./cmd
+    startCommand: ./server
+    healthCheckPath: /api/healthz
+    autoDeploy: true
+    port: 8080
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: PLATFORM
+        value: prod
+      - key: ENV
+        value: production

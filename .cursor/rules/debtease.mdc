@@ -1,0 +1,103 @@
+---
+alwaysApply: true
+---
+# .cursor/rules
+# --------------------------------------------------------------
+# 1. GLOBAL GO SETTINGS
+# --------------------------------------------------------------
+indent: tabs
+tab_width: 4
+trim_trailing_whitespace: true
+insert_final_newline: true
+
+# --------------------------------------------------------------
+# 2. DEBTEASE‑SPECIFIC RULES (never repeat the bugs again)
+# --------------------------------------------------------------
+rules:
+  # 2.1 MONEY MUST BE decimal.Decimal
+  - pattern: '(string.*(Balance|Payment|Principal|Fee|Interest|Score))'
+    replace: 'decimal.Decimal'
+    files: '**/*.go'
+    message: "Use shopspring/decimal for ALL money fields – never string!"
+
+  # 2.2 DATES MUST BE time.Time
+  - pattern: '(string.*(Date|Taken|Created|Updated))'
+    replace: 'time.Time'
+    files: 'models/**/*.go'
+    message: "Dates are time.Time. Use ISO strings only in JSON tags."
+
+  # 2.3 OPTIONAL FIELDS → sql.Null* or pointer
+  - pattern: '\*\w+.*json:".*omitempty"'
+    require_tag: 'db'
+    message: "Optional JSON fields must have sql.Null* counterpart for sqlc."
+
+  # 2.4 sqlc structs → db tags + ToResponse()
+  - pattern: 'type .* struct \{'
+    files: 'internal/db/*.go'
+    require: 
+      - 'db:"'          # every field needs db tag
+      - 'ToResponse()'  # every model must export JSON converter
+    message: "sqlc rows → API: add `db` tags + ToResponse() method"
+
+  # 2.5 Validation tags mandatory
+  - pattern: 'json:".*"'
+    files: 'models/**/*.go'
+    require_tag: 'validate'
+    message: "Every JSON field needs `validate:` tag (ozzo or go-playground)"
+
+# --------------------------------------------------------------
+# 3. API LAYER RULES (net/http + Go 1.22 ServeMux)
+# --------------------------------------------------------------
+  # 3.1 Handlers must use context & return JSON
+  - pattern: 'func .*Handler.*\(w http.ResponseWriter, r .*http.Request\)'
+    require:
+      - 'ctx := r.Context()'
+      - 'JSON\(w, '
+      - 'WriteHeader\('
+    message: "All handlers: ctx, JSON helper, proper status codes"
+
+  # 3.2 Use decimal.Decimal in service layer
+  - pattern: 'service|handler'
+    forbid: 'float64.*(balance|payment|interest)'
+    message: "float64 money = rounding bugs → decimal.Decimal only"
+
+  # 3.3 Middleware chain
+  - pattern: 'func main\(\)'
+    require:
+      - 'mux := http.NewServeMux()'
+      - 'logger := middleware.Logger'
+      - 'auth := middleware.Auth'
+      - 'mux.Handle\(".*", logger\(auth\('
+    message: "Stack: Logger → Auth → RateLimit → Handler"
+
+# --------------------------------------------------------------
+# 4. TESTING RULES
+# --------------------------------------------------------------
+  - pattern: '_test.go'
+    require:
+      - 't.Parallel()'
+      - 'httptest.NewRequest'
+      - 'decimal.RequireFromString'
+    message: "All tests: parallel, httptest, decimal literals"
+
+# --------------------------------------------------------------
+# 5. COMMON FIXES (auto‑apply on save)
+# --------------------------------------------------------------
+auto_fix:
+  - find: 'due_date.*string'
+    replace: 'due_date time.Time `json:"due_date" validate:"required"`'
+  - find: 'outstanding_balance.*string'
+    replace: 'outstanding_balance decimal.Decimal `json:"outstanding_balance" validate:"required"`'
+  - find: 'principal_decimal'
+    replace: 'principal'
+
+# --------------------------------------------------------------
+# 6. FINAL MESSAGE
+# --------------------------------------------------------------
+on_save_message: |
+  Debtease rules applied!
+  • Money = decimal.Decimal
+  • Dates = time.Time
+  • sqlc ↔ JSON = ToResponse()
+  • All handlers validated & logged
+  Ready for sqlc generate && go test ./...
